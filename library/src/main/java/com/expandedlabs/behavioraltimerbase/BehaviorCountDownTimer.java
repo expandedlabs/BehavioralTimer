@@ -1,13 +1,11 @@
 package com.expandedlabs.behavioraltimerbase;
 
-import android.os.CountDownTimer;
+import android.util.Log;
 
 import java.util.Random;
 
-/**
- * Created by darkamikaze on 4/12/2016.
- */
-public class BehaviorCountDownTimer
+
+public abstract class BehaviorCountDownTimer
 {
     static final int TICK_INTERVAL = 100;
 
@@ -74,6 +72,19 @@ public class BehaviorCountDownTimer
     long mCurrentTimerValue = 0;
     long mCurrentIntervalValue = 0;
     boolean mCurrentLimitedHold = false;
+    int mCurrentIterationValue = 0;
+
+    /**
+     *  This will hold the up coming interval value which will depend if things are randomized
+     *  and how the randomized is broken down.
+     */
+    long mNextIntervalValue = 0;
+    long mNextValueForAnInterval = 0;
+
+    /**
+     * Random generator
+     */
+    Random mRandomGen = new Random();
 
     public BehaviorCountDownTimer(long timerValue,
                                   long intervalValue,
@@ -85,6 +96,7 @@ public class BehaviorCountDownTimer
     {
         mDefinedTimerValue = timerValue;
         mDefinedIntervalValue = intervalValue;
+        mNextIntervalValue = intervalValue;
 
         mDefinedRandomFlag = randomFlag;
         mDefinedStyle = style;
@@ -93,6 +105,14 @@ public class BehaviorCountDownTimer
         mDefinedMaxRandomValue = maxRandom;
 
         mDefinedRandIterationValue = numberOfIterations;
+
+        //Check to make sure we didn't get an invalid number e.g. less than 0 and/or iteration
+        //is not less than 1 second. Maybe this check should be done prior to this timer...?
+        if(mDefinedRandIterationValue <= 0 &&
+            (mDefinedTimerValue / 1000) / mDefinedRandIterationValue <= 1)
+        {
+            mDefinedRandIterationValue = 1;
+        }
 
         mDefinedLimitedHold = limitedHoldFlag;
         mDefinedLimitedHoldValue = limitedHold;
@@ -112,8 +132,14 @@ public class BehaviorCountDownTimer
     /**
      * Resume the timer
      */
-    public void resume()
+    public void start()
     {
+        if(mCurrentTimerValue <= 0)
+        {
+            //Check if our timer is over if so, reset it first
+            reset();
+        }
+
         createTimer(); //recreate it in this sense
         mCustomizedCountdown.start();
         mTimerRunning = true;
@@ -121,13 +147,47 @@ public class BehaviorCountDownTimer
 
     public void reset()
     {
-        calculateNewIntervalValue();
+        mNextIntervalValue = mDefinedIntervalValue;
 
-        mCurrentIntervalValue = mDefinedIntervalValue;
+        calculateNewIntervalValue();
+        mNextValueForAnInterval = mDefinedTimerValue - mNextIntervalValue;
+
         mCurrentTimerValue = mDefinedTimerValue;
         mCurrentLimitedHold = false;
+        mCurrentIterationValue = 0;
+    }
 
-        createTimer();
+
+    /**
+     * Callbacks for the timer's onTick and onFinish
+     */
+    public abstract void onTick();
+    public abstract void onFinish();
+
+    /********************************************
+     * PROTECTED
+     ********************************************/
+
+    protected void innerTick(long millisUntilFinished)
+    {
+        mCurrentTimerValue = millisUntilFinished;
+
+        mCurrentIntervalValue = mCurrentTimerValue - mNextValueForAnInterval;
+        checkForIntervalChanges();
+
+        onTick();
+    }
+
+    protected void innerFinish()
+    {
+        mTimerRunning = false;
+
+        //Zero values since the timer has finished
+        mCurrentTimerValue = 0;
+        mCurrentIntervalValue = 0;
+        mCurrentLimitedHold = false;
+
+        onFinish();
     }
 
 
@@ -157,20 +217,19 @@ public class BehaviorCountDownTimer
             switch(mDefinedStyle)
             {
                 case ITERATION:
-                    //TODO
+                    getIterationInterval();
                     break;
                 case DEVIATION:
-                    //TODO
+                    getDeviationInterval();
                     break;
-
                 case REGULAR:
-                    getRegularRandomInterval();
                 default:
+                    getRegularRandomInterval();
+
             }
         }
 
-        mCurrentIntervalValue = mDefinedIntervalValue;
-
+        mCurrentIntervalValue = mNextIntervalValue;
     }
 
     /**
@@ -178,7 +237,7 @@ public class BehaviorCountDownTimer
      */
     private void createTimer()
     {
-        mCustomizedCountdown = new CustomizedCountdown(mCurrentTimerValue, TICK_INTERVAL);
+        mCustomizedCountdown = new CustomizedCountdown(mCurrentTimerValue, TICK_INTERVAL, this);
     }
 
     /**
@@ -190,15 +249,19 @@ public class BehaviorCountDownTimer
         {
             //We have iterated, calculate an interval value
             calculateNewIntervalValue();
+
+            mNextValueForAnInterval = mCurrentTimerValue - mNextIntervalValue;
+
+            //Increment iteration
+            ++mCurrentIterationValue;
         }
     }
 
     private void getRegularRandomInterval()
     {
-        Random rand = new Random();
-
-        long interval = mDefinedMinRandomValue
-                + (long) ((rand.nextDouble()) * ((mDefinedMaxRandomValue - mDefinedMinRandomValue) + 1));
+       long interval = mDefinedMinRandomValue
+                + (long) ((mRandomGen.nextDouble())
+               * ((mDefinedMaxRandomValue - mDefinedMinRandomValue) + 1));
 
         interval = interval - (interval % 1000); // go to nearest second
 
@@ -209,43 +272,55 @@ public class BehaviorCountDownTimer
             interval = mCurrentTimerValue;
         }
 
-        mDefinedIntervalValue = interval;
+        mNextIntervalValue = interval;
     }
 
-    /**
-     * This is the actual android countdown timer the behavioral timer uses. We didn't extend
-     * to this class simply because the basic timer has no pause functionality. The only way
-     * to stop it is by calling cancel() and when that's done, there's no way to update the
-     * millis in future without having to call new.
-     */
-    private class CustomizedCountdown extends CountDownTimer
+    private void getIterationInterval()
     {
-        /**
-         * @param millisInFuture    The number of millis in the future from the call
-         *                          to {@link #start()} until the countdown is done and {@link #onFinish()}
-         *                          is called.
-         * @param countDownInterval The interval along the way to receive
-         *                          {@link #onTick(long)} callbacks.
-         */
-        public CustomizedCountdown(long millisInFuture, long countDownInterval)
+        int intervalsLeft = mDefinedRandIterationValue - mCurrentIterationValue - 1;
+
+        if(intervalsLeft == 0)
         {
-            super(millisInFuture, countDownInterval);
+            //Last interval, simply set it to what we have left in our main timer
+            mNextIntervalValue = mCurrentTimerValue;
+            return;
         }
 
-        @Override
-        public void onTick(long millisUntilFinished)
+        long maxIntervalValue = mCurrentTimerValue / intervalsLeft;
+        long minIntervalValue = (long)((mCurrentTimerValue / mDefinedRandIterationValue) * 0.5);
+
+        //Create random interval
+        long interval = minIntervalValue
+                + (long) ((mRandomGen.nextDouble())
+                * ((maxIntervalValue - minIntervalValue) + 1));
+
+        interval = interval - (interval % 1000); // go to nearest second
+
+        if(interval <= 0)
         {
-            mCurrentTimerValue = millisUntilFinished;
-
-            mCurrentIntervalValue = mCurrentTimerValue - (mDefinedTimerValue - mDefinedIntervalValue);
-            checkForIntervalChanges();
-
+            // This is extra precaution in case we generated an interval less than a second
+            // might not be needed...
+            interval = mCurrentTimerValue;
         }
 
-        @Override
-        public void onFinish()
-        {
+        mNextIntervalValue = interval;
+    }
 
+    private void getDeviationInterval()
+    {
+        //Get a random interval based on the given min/max intervals
+        getRegularRandomInterval();
+
+        //Choose whether to decrement/increment the defined interval value with the min/max
+        // intervals
+        if(mRandomGen.nextBoolean())
+        {
+            mNextIntervalValue += mDefinedIntervalValue;
         }
+        else
+        {
+            mNextIntervalValue = Math.abs(mDefinedIntervalValue - mNextIntervalValue);
+        }
+
     }
 }
