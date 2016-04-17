@@ -1,6 +1,7 @@
 package com.expandedlabs.behavioraltimerbase;
 
 import android.os.CountDownTimer;
+import android.util.Log;
 
 /**
  * This is the actual android countdown timer the behavioral timer uses. We didn't extend
@@ -10,6 +11,7 @@ import android.os.CountDownTimer;
  */
 public class CustomizedCountdown extends CountDownTimer
 {
+    private static String TAG = "BCDT.CustomizedCountdown";
     private BehaviorCountDownTimer mBTimer;
 
     /**
@@ -34,6 +36,7 @@ public class CustomizedCountdown extends CountDownTimer
     @Override
     public void onFinish()
     {
+        Log.d(TAG, "finished.");
         mBTimer.innerFinish();
     }
 }

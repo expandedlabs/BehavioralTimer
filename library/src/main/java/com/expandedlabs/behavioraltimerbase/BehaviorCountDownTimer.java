@@ -8,6 +8,8 @@ import java.util.Random;
 public abstract class BehaviorCountDownTimer
 {
     static final int TICK_INTERVAL = 100;
+    static String TAG = "BehaviorCountDownTimer";
+
 
     /**
      * REGULAR - regular random pulled from defined min/max random values
@@ -106,14 +108,6 @@ public abstract class BehaviorCountDownTimer
 
         mDefinedRandIterationValue = numberOfIterations;
 
-        //Check to make sure we didn't get an invalid number e.g. less than 0 and/or iteration
-        //is not less than 1 second. Maybe this check should be done prior to this timer...?
-        if(mDefinedRandIterationValue <= 0 &&
-            (mDefinedTimerValue / 1000) / mDefinedRandIterationValue <= 1)
-        {
-            mDefinedRandIterationValue = 1;
-        }
-
         mDefinedLimitedHold = limitedHoldFlag;
         mDefinedLimitedHoldValue = limitedHold;
 
@@ -147,6 +141,14 @@ public abstract class BehaviorCountDownTimer
 
     public void reset()
     {
+        //Check to make sure we didn't get an invalid number e.g. less than 0 and/or iteration
+        //is not less than 1 second. Maybe this check should be done prior to this timer...?
+        if(mDefinedRandIterationValue <= 0 &&
+                (mDefinedTimerValue / 1000) / mDefinedRandIterationValue <= 1)
+        {
+            mDefinedRandIterationValue = 1;
+        }
+
         mNextIntervalValue = mDefinedIntervalValue;
 
         calculateNewIntervalValue();
@@ -180,7 +182,11 @@ public abstract class BehaviorCountDownTimer
 
     protected void innerFinish()
     {
+        Log.d(TAG, "finished.");
         mTimerRunning = false;
+
+        // Final increment iteration when we are not doing a limited hold
+            ++mCurrentIterationValue;
 
         //Zero values since the timer has finished
         mCurrentTimerValue = 0;
@@ -196,19 +202,25 @@ public abstract class BehaviorCountDownTimer
      ********************************************/
     private void calculateNewIntervalValue()
     {
-        //Check if we are doing a limited hold, if we are update the current interval and
-        //continue
-        if(mDefinedLimitedHold)
+        //Check if we are doing a limited hold if we are then make sure it's not the very first
+        //iteration (e.g. before the timer is even running since a limited hold ALWAYS happens
+        //after 1 regular/random iteration.
+        if(mDefinedLimitedHold && mTimerRunning )
         {
             if(!mCurrentLimitedHold)
             {
                 //We were in a regular interval, do a limited hold next
+                mNextIntervalValue = mDefinedLimitedHoldValue;
                 mCurrentIntervalValue = mDefinedLimitedHoldValue;
+                mCurrentLimitedHold = true;
+                Log.d(TAG, "Limited Hold started.");
                 return;
             }
 
-            //Toggle the limited hold flag
-            mCurrentLimitedHold = !mCurrentLimitedHold;
+            //Since we got here, that means we just did a limited hold and the next
+            //interval should be a regular interval
+            mCurrentLimitedHold = false;
+            mNextIntervalValue = mDefinedIntervalValue;
         }
 
         //Check if we are doing randomized intervals
@@ -217,12 +229,15 @@ public abstract class BehaviorCountDownTimer
             switch(mDefinedStyle)
             {
                 case ITERATION:
+                    Log.d(TAG, "Iteration Random");
                     getIterationInterval();
                     break;
                 case DEVIATION:
+                    Log.d(TAG, "Deviation Random");
                     getDeviationInterval();
                     break;
                 case REGULAR:
+                    Log.d(TAG, "Regular Random");
                 default:
                     getRegularRandomInterval();
 
@@ -247,13 +262,22 @@ public abstract class BehaviorCountDownTimer
     {
         if(mCurrentIntervalValue <= 0)
         {
+            Log.d(TAG, "Interval completed.");
+
             //We have iterated, calculate an interval value
             calculateNewIntervalValue();
 
             mNextValueForAnInterval = mCurrentTimerValue - mNextIntervalValue;
 
-            //Increment iteration
-            ++mCurrentIterationValue;
+            Log.d(TAG, "Next Interval: " + mNextIntervalValue);
+
+
+            //Increment iteration when we are not doing a limited hold
+            if(!mCurrentLimitedHold)
+            {
+                ++mCurrentIterationValue;
+                Log.d(TAG, "Iteration count: " + mCurrentIterationValue);
+            }
         }
     }
 

@@ -5,9 +5,12 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.AsyncTask;
 import android.support.test.runner.AndroidJUnit4;
+import android.test.suitebuilder.annotation.LargeTest;
 import android.test.suitebuilder.annotation.SmallTest;
 import android.util.Log;
 
+import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 
@@ -23,27 +26,28 @@ import static org.junit.Assert.assertEquals;
 @SmallTest
 public class ApplicationTest
 {
-    private String TAG = "BCDT Test";
+    private static String TAG = "BCDT Test";
+
+    private static BehaviorCountDownTimer sTimer;
 
 
-    private void timerTestHelper(final long timerValue,
-                                 final long intervalValue,
-                                 boolean randomFlag,
-                                 RandomStyleEnum style,
-                                 long minRandom, long maxRandom,
-                                 int numberOfIterations,
-                                 boolean limitedHoldFlag, long limitedHold,
-                                 //Expected
-                                 final long expectedTimerValue,
-                                 final long expectedIntervalValue,
-                                 final int expectedNumberOfIterations) throws InterruptedException
+    @BeforeClass
+    public static void createTimer()
     {
-
+        long sTimerValue = 15 * 1000;
+        long sIntervalValue = 5 * 1000;
+        boolean sRandomFlag = false;
+        RandomStyleEnum sStyle = RandomStyleEnum.REGULAR;
+        long sMinRandom = 2 * 1000;
+        long sMaxRandom = 4 * 1000;
+        int sNumberOfIterations = 3;
+        boolean sLimitedHoldFlag = false;
+        long sLimitedHold = 5 * 1000;
 
         //Create timer
-        final BehaviorCountDownTimer timer = new BehaviorCountDownTimer(timerValue, intervalValue,
-                randomFlag, style, minRandom, maxRandom, numberOfIterations,
-                limitedHoldFlag, limitedHold)
+        sTimer = new BehaviorCountDownTimer(sTimerValue, sIntervalValue,
+                sRandomFlag, sStyle, sMinRandom, sMaxRandom, sNumberOfIterations,
+                sLimitedHoldFlag, sLimitedHold)
         {
             @Override
             public void onTick()
@@ -57,26 +61,25 @@ public class ApplicationTest
                 Log.v(TAG, "Timer finished.");
             }
         };
+    }
 
+    private void runTimer() throws InterruptedException
+    {
         //Create runnable since it has to sync up with the main thread
         Runnable runnable = new Runnable()
         {
             @Override
             public void run()
             {
-                timer.start();
+                sTimer.reset();
+                sTimer.start();
             }
 
         };
 
         //Start timer and wait for the timer value + 1 second
         getInstrumentation().waitForIdle(runnable);
-        Thread.sleep(timerValue + 1000);
-
-        //Verify end values are correct
-        assertEquals(expectedTimerValue, timer.mCurrentTimerValue);
-        assertEquals(expectedIntervalValue, timer.mCurrentIntervalValue);
-        assertEquals(expectedNumberOfIterations, timer.mCurrentIterationValue);
+        Thread.sleep(sTimer.mDefinedTimerValue + 1000);
     }
 
     /**
@@ -88,31 +91,58 @@ public class ApplicationTest
     @Test
     public void timer_isCorrect() throws InterruptedException
     {
+        Log.v(TAG, "timer_isCorrect begin.");
+
         //Initialize parameters
-        final long timerValue = 5 * 1000;
-        long intervalValue = 1 * 1000;
-        boolean randomFlag = false;
-        RandomStyleEnum style = RandomStyleEnum.REGULAR;
-        long minRandom = 5 * 1000;
-        long maxRandom = 10 * 1000;
-        final int numberOfIterations = 3;
-        boolean limitedHoldFlag = false;
-        long limitedHold = 10 * 1000;
+        sTimer.mDefinedTimerValue = 5 * 1000;
+        sTimer.mDefinedIntervalValue = 1 * 1000;
+        sTimer.mDefinedRandomFlag = false;
+        sTimer.mDefinedStyle = RandomStyleEnum.REGULAR;
+        sTimer.mDefinedMinRandomValue = 5 * 1000;
+        sTimer.mDefinedMaxRandomValue = 10 * 1000;
+        sTimer.mDefinedRandIterationValue = 3;
+        sTimer.mDefinedLimitedHold = false;
+        sTimer.mDefinedLimitedHoldValue = 10 * 1000;
 
         //Initialize expected
         long expectedTimerValue = 0;
         long expectedIntervalValue = 0;
-        int expectedNumberOfIterations = 4;
+        int expectedNumberOfIterations = 5;
 
-        timerTestHelper(timerValue, intervalValue,
-                randomFlag, style, minRandom, maxRandom, numberOfIterations,
-                limitedHoldFlag, limitedHold,
-                //Expected
-                expectedTimerValue, expectedIntervalValue,
-                expectedNumberOfIterations);
+        runTimer();
+
+        //Verify end values are correct
+        assertEquals(expectedTimerValue, sTimer.mCurrentTimerValue);
+        assertEquals(expectedIntervalValue, sTimer.mCurrentIntervalValue);
+        assertEquals(expectedNumberOfIterations, sTimer.mCurrentIterationValue);
 
         Log.v(TAG, "timer_isCorrect finished.");
+    }
 
+    @Test
+    public void limitedHold_isCorrect() throws InterruptedException
+    {
+        Log.v(TAG, "limitedHold_isCorrect begin.");
+
+        //Initialize parameters
+        sTimer.mDefinedTimerValue = 30 * 1000;
+        sTimer.mDefinedIntervalValue = 5 * 1000;
+        sTimer.mDefinedRandomFlag = false;
+        sTimer.mDefinedStyle = RandomStyleEnum.REGULAR;
+        sTimer.mDefinedMinRandomValue = 5 * 1000;
+        sTimer.mDefinedMaxRandomValue = 10 * 1000;
+        sTimer.mDefinedRandIterationValue = 3;
+        sTimer.mDefinedLimitedHold = true;
+        sTimer.mDefinedLimitedHoldValue = 10 * 1000;
+
+        //Initialize expected
+        int expectedNumberOfIterations = 2;
+
+        runTimer();
+
+        assertEquals(expectedNumberOfIterations, sTimer.mCurrentIterationValue);
+
+        Log.v(TAG, "limitedHold_isCorrect finished.");
 
     }
 }
