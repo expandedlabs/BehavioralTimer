@@ -28,4 +28,9 @@ e.g.
   
   ## Usage ##
   TODO
+  * Add to gradle portal https://plugins.gradle.org/docs/submit
+  * Add more testing
+  * * Test limited hold with each case of random
+  * * Test each case of random
+  * * Test deformed inputs (e.g. negative numbers, 0s, flipped min/max random, really high iterations)
   
