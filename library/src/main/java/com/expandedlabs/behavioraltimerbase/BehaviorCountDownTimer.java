@@ -7,9 +7,9 @@ import java.util.Random;
 
 public abstract class BehaviorCountDownTimer
 {
+//region MEMBER VARIABLES
     static final int TICK_INTERVAL = 100;
-    static String TAG = "BehaviorCountDownTimer";
-
+    static final String TAG = "BehaviorCountDownTimer";
 
     /**
      * REGULAR - regular random pulled from defined min/max random values
@@ -27,67 +27,90 @@ public abstract class BehaviorCountDownTimer
     }
 
     /**
-     * Countdown timer instance
+     * NO_ADJUSTMENT - No changes to the timer were done
+     * INTERVAL_ADJUSTMENT - Adjusted main timer because the interval does not divide
+     *                      nicely against the main timer
+     * ITERATION_ADJUSTMENT - Random iterations was set but the total number of iterations
+     *                      specified was bogus e.g. 0 iterations, 1 iteration or iterations
+     *                      that create less than 1 second interval values
      */
-    CustomizedCountdown mCustomizedCountdown;
+    public enum IllFitEnum
+    {
+        NO_ADJUSTMENT,
+        INTERVAL_ADJUSTMENT,
+        ITERATION_ADJUSTMENT
+    }
 
+    private  IllFitEnum mTimerFitting = IllFitEnum.NO_ADJUSTMENT;
+
+    /**
+     * Flag that specifies a reset should be done
+     */
+    boolean mReset = false;
     /**
      * Specifies if the timer is running
      */
-    boolean mTimerRunning = false;
+    private boolean mTimerRunning = false;
+
+    /**
+     * Countdown timer instance
+     */
+    private CustomizedCountdown mCustomizedCountdown;
 
     /**
      * Flag that signifies this instance has randomized interval values
      */
-    boolean mDefinedRandomFlag = false;
-    RandomStyleEnum mDefinedStyle = RandomStyleEnum.REGULAR;
+    private boolean mDefinedRandomFlag = false;
+    private RandomStyleEnum mDefinedStyle = RandomStyleEnum.REGULAR;
 
     /**
      * Holds highest/lowest value a random interval can be
      */
-    long mDefinedMaxRandomValue = 9999;
-    long mDefinedMinRandomValue = 0;
+    private long mDefinedMaxRandomValue = 9999;
+    private long mDefinedMinRandomValue = 0;
 
     /**
      * Hold how many iterations for the random intervals
      */
-    int mDefinedRandIterationValue = 0;
+    private int mDefinedRandIterationValue = 0;
     /**
      * Flag that signifies we have a limited hold type interval
      */
-    boolean mDefinedLimitedHold = false;
+    private boolean mDefinedLimitedHold = false;
 
     /**
      * Holds the definition for the limited hold interval
      */
-    long mDefinedLimitedHoldValue = 0;
+    private long mDefinedLimitedHoldValue = 0;
 
     /**
      * Holds the definition for the basic timer elements
      */
-    long mDefinedIntervalValue = 0;
-    long mDefinedTimerValue = 0;
+    private long mDefinedIntervalValue = 0;
+    private long mDefinedTimerValue = 0;
 
     /**
      * Holds the current value for the timer elements
      */
-    long mCurrentTimerValue = 0;
-    long mCurrentIntervalValue = 0;
-    boolean mCurrentLimitedHold = false;
-    int mCurrentIterationValue = 0;
+    private long mCurrentTimerValue = 0;
+    private long mCurrentIntervalValue = 0;
+    private boolean mCurrentLimitedHold = false;
+    private int mCurrentIterationValue = 0;
 
     /**
      *  This will hold the up coming interval value which will depend if things are randomized
      *  and how the randomized is broken down.
      */
-    long mNextIntervalValue = 0;
-    long mNextValueForAnInterval = 0;
+    private long mNextIntervalValue = 0;
+    private long mNextValueForAnInterval = 0;
 
     /**
      * Random generator
      */
     Random mRandomGen = new Random();
+//endregion
 
+//region CONSTRUCTOR
     public BehaviorCountDownTimer(long timerValue,
                                   long intervalValue,
                                   boolean randomFlag,
@@ -100,20 +123,15 @@ public abstract class BehaviorCountDownTimer
         mDefinedIntervalValue = intervalValue;
         mNextIntervalValue = intervalValue;
 
-        mDefinedRandomFlag = randomFlag;
-        mDefinedStyle = style;
+        setTimerRandom(randomFlag, style, minRandom, maxRandom, numberOfIterations);
 
-        mDefinedMinRandomValue = minRandom;
-        mDefinedMaxRandomValue = maxRandom;
+        setLimitedHold(limitedHoldFlag, limitedHold);
 
-        mDefinedRandIterationValue = numberOfIterations;
-
-        mDefinedLimitedHold = limitedHoldFlag;
-        mDefinedLimitedHoldValue = limitedHold;
-
-        reset();
+        invalidate();
     }
+//endregion
 
+//region TIMER ACTIONS
     /**
      * Pause the timer
      */
@@ -128,7 +146,7 @@ public abstract class BehaviorCountDownTimer
      */
     public void start()
     {
-        if(mCurrentTimerValue <= 0)
+        if(mCurrentTimerValue <= 0 || mReset)
         {
             //Check if our timer is over if so, reset it first
             reset();
@@ -139,15 +157,14 @@ public abstract class BehaviorCountDownTimer
         mTimerRunning = true;
     }
 
+    /**
+     * Update current values for defined values and verify the timer members have proper
+     * values
+     */
     public void reset()
     {
-        //Check to make sure we didn't get an invalid number e.g. less than 0 and/or iteration
-        //is not less than 1 second. Maybe this check should be done prior to this timer...?
-        if(mDefinedRandIterationValue <= 0 &&
-                (mDefinedTimerValue / 1000) / mDefinedRandIterationValue <= 1)
-        {
-            mDefinedRandIterationValue = 1;
-        }
+        //Verify times are accurate
+        checkTimerFitting();
 
         mNextIntervalValue = mDefinedIntervalValue;
 
@@ -156,20 +173,147 @@ public abstract class BehaviorCountDownTimer
 
         mCurrentTimerValue = mDefinedTimerValue;
         mCurrentLimitedHold = false;
+        mTimerRunning = false;
         mCurrentIterationValue = 0;
-    }
 
+        mReset = false;
+    }
+    //endregion
+
+//region SETTERS
 
     /**
-     * Callbacks for the timer's onTick and onFinish
+     * Set the timer limited hold features on and off with a given
+     * hold value
+     * @param holdFlag - Toggle timer capability to do a limited hold
+     * @param holdValue - Value in milliseconds to do a limited hold after a regular interval
      */
+    public void setLimitedHold(boolean holdFlag, long holdValue)
+    {
+        mDefinedLimitedHold = holdFlag;
+        if(holdFlag)
+        {
+            mDefinedLimitedHoldValue = holdValue;
+        }
+        else
+        {
+            mDefinedLimitedHoldValue = 0;
+        }
+
+        //The timer values have changed, invalidate
+        invalidate();
+    }
+
+    /**
+     * Sets the timer to do random interval values based on style
+     * @param randomFlag True to create random intervals
+     * @param style Set a style of randomized intervals
+     * @param minRandom Lowest value the random interval will use for manipulation
+     * @param maxRandom Highest value the random interval will use for manipulation
+     * @param numberOfIterations Used when style is ITERATION and the total iterations the timer
+     *                           would run for with random length intervals
+     */
+    public void setTimerRandom(boolean randomFlag,
+                               RandomStyleEnum style,
+                               long minRandom, long maxRandom,
+                               int numberOfIterations)
+    {
+        mDefinedRandomFlag = randomFlag;
+        mDefinedStyle = style;
+
+        mDefinedMinRandomValue = minRandom;
+        mDefinedMaxRandomValue = maxRandom;
+
+        mDefinedRandIterationValue = numberOfIterations;
+
+        invalidate();
+    }
+
+    /**
+     * Set the main timer's duration
+     * @param timerValue Milliseconds for the main timer's duration
+     */
+    public void setTimerValue(long timerValue)
+    {
+        mDefinedTimerValue = timerValue;
+        invalidate();
+    }
+
+    /**
+     * Set the timer's interval duration
+     * @param intervalValue Milliseconds for timer intervals
+     */
+    public void setIntervalValue(long intervalValue)
+    {
+        mDefinedIntervalValue = intervalValue;
+        invalidate();
+    }
+//endregion
+
+//region GETTERS
+    /**
+     * Getter for limited hold flag
+     * @return Returns true if the timer is running a limited hold after each interval
+     */
+    public boolean getLimitedHoldFlag()
+    {
+        return mDefinedLimitedHold;
+    }
+
+    /**
+     * Getter for limited hold value
+     * @return Returns the limited hold value in milliseconds, zero if limited hold flag is false
+     */
+    public long getLimitedHoldValue()
+    {
+        return mDefinedLimitedHoldValue;
+    }
+
+    /**
+     * Get the defined timer value, this value can be different if it has been form fitted given
+     * by mTimerFitting
+     * @return Returns the main timer's defined value in milliseconds
+     */
+    public long getDefinedTimerValue()
+    {
+        return mDefinedTimerValue;
+    }
+
+    /**
+     * Get the current timer's value
+     * @return Returns the main timer's current value in milliseconds
+     */
+    public long getCurrentTimerValue()
+    {
+        return mCurrentTimerValue;
+    }
+
+    /**
+     * Returns the current interval's value
+     * @return Returns the current interval's value in milliseconds
+     */
+    public long getCurrentIntervalValue()
+    {
+        return mCurrentIntervalValue;
+    }
+
+    /**
+     * Returns current iteration value
+     * @return Returns the current iteration value
+     */
+    public int getCurrentIterationValue()
+    {
+        return mCurrentIterationValue;
+    }
+
+//endregion
+
+//region CALLBACKS
     public abstract void onTick();
     public abstract void onFinish();
+//endregion
 
-    /********************************************
-     * PROTECTED
-     ********************************************/
-
+//region PROTECTED
     protected void innerTick(long millisUntilFinished)
     {
         mCurrentTimerValue = millisUntilFinished;
@@ -178,6 +322,14 @@ public abstract class BehaviorCountDownTimer
         checkForIntervalChanges();
 
         onTick();
+
+        if(mReset)
+        {
+            //The timer was running but the reset flag seemed to have been queued.
+            //The user must have changed the timer while it was running.
+            mCustomizedCountdown.cancel();
+            reset();
+        }
     }
 
     protected void innerFinish()
@@ -195,11 +347,33 @@ public abstract class BehaviorCountDownTimer
 
         onFinish();
     }
+//endregion
 
+//region PRIVATE HELPER METHODS
+    private void checkTimerFitting()
+    {
+        mTimerFitting = IllFitEnum.NO_ADJUSTMENT;
 
-    /********************************************
-     * PRIVATE
-     ********************************************/
+        //Check to make sure we didn't get an invalid number e.g. less than 0 and/or iteration
+        //is not less than 1 second. Maybe this check should be done prior to this timer...?
+        if(mDefinedRandIterationValue <= 0 &&
+                (mDefinedTimerValue / 1000) / mDefinedRandIterationValue <= 1)
+        {
+            mDefinedRandIterationValue = 1;
+            mTimerFitting = IllFitEnum.ITERATION_ADJUSTMENT;
+        }
+
+        long modResult = mDefinedTimerValue % mDefinedIntervalValue + mDefinedLimitedHoldValue;
+        if(modResult != 0)
+        {
+            //The interval time does not fit perfectly in our timer,
+            //this will adjust the main timer to fit an equal set of intervals
+            mDefinedTimerValue += mDefinedIntervalValue - modResult;
+
+            mTimerFitting = IllFitEnum.INTERVAL_ADJUSTMENT;
+        }
+    }
+
     private void calculateNewIntervalValue()
     {
         //Check if we are doing a limited hold if we are then make sure it's not the very first
@@ -347,4 +521,10 @@ public abstract class BehaviorCountDownTimer
         }
 
     }
+
+    private void invalidate()
+    {
+        mReset = true;
+    }
+    //endregion
 }

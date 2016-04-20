@@ -52,7 +52,7 @@ public class ApplicationTest
             @Override
             public void onTick()
             {
-                Log.v(TAG, "Interval: " + mCurrentTimerValue);
+                Log.v(TAG, "Interval: " + getCurrentTimerValue());
             }
 
             @Override
@@ -79,7 +79,7 @@ public class ApplicationTest
 
         //Start timer and wait for the timer value + 1 second
         getInstrumentation().waitForIdle(runnable);
-        Thread.sleep(sTimer.mDefinedTimerValue + 1000);
+        Thread.sleep(sTimer.getDefinedTimerValue() + 1000);
     }
 
     /**
@@ -94,15 +94,14 @@ public class ApplicationTest
         Log.v(TAG, "timer_isCorrect begin.");
 
         //Initialize parameters
-        sTimer.mDefinedTimerValue = 5 * 1000;
-        sTimer.mDefinedIntervalValue = 1 * 1000;
-        sTimer.mDefinedRandomFlag = false;
-        sTimer.mDefinedStyle = RandomStyleEnum.REGULAR;
-        sTimer.mDefinedMinRandomValue = 5 * 1000;
-        sTimer.mDefinedMaxRandomValue = 10 * 1000;
-        sTimer.mDefinedRandIterationValue = 3;
-        sTimer.mDefinedLimitedHold = false;
-        sTimer.mDefinedLimitedHoldValue = 10 * 1000;
+        sTimer.setTimerValue(5 * 1000);
+        sTimer.setIntervalValue(1 * 1000);
+        sTimer.setTimerRandom(false,
+                RandomStyleEnum.REGULAR,
+                5 * 1000,
+                10 * 1000,
+                3);
+        sTimer.setLimitedHold(false, 10*1000);
 
         //Initialize expected
         long expectedTimerValue = 0;
@@ -112,9 +111,9 @@ public class ApplicationTest
         runTimer();
 
         //Verify end values are correct
-        assertEquals(expectedTimerValue, sTimer.mCurrentTimerValue);
-        assertEquals(expectedIntervalValue, sTimer.mCurrentIntervalValue);
-        assertEquals(expectedNumberOfIterations, sTimer.mCurrentIterationValue);
+        assertEquals(expectedTimerValue, sTimer.getCurrentTimerValue());
+        assertEquals(expectedIntervalValue, sTimer.getCurrentIntervalValue());
+        assertEquals(expectedNumberOfIterations, sTimer.getCurrentIterationValue());
 
         Log.v(TAG, "timer_isCorrect finished.");
     }
@@ -125,22 +124,22 @@ public class ApplicationTest
         Log.v(TAG, "limitedHold_isCorrect begin.");
 
         //Initialize parameters
-        sTimer.mDefinedTimerValue = 30 * 1000;
-        sTimer.mDefinedIntervalValue = 5 * 1000;
-        sTimer.mDefinedRandomFlag = false;
-        sTimer.mDefinedStyle = RandomStyleEnum.REGULAR;
-        sTimer.mDefinedMinRandomValue = 5 * 1000;
-        sTimer.mDefinedMaxRandomValue = 10 * 1000;
-        sTimer.mDefinedRandIterationValue = 3;
-        sTimer.mDefinedLimitedHold = true;
-        sTimer.mDefinedLimitedHoldValue = 10 * 1000;
+        sTimer.setTimerValue(30 * 1000);
+        sTimer.setIntervalValue(5 * 1000);
+        sTimer.setTimerRandom(false,
+                RandomStyleEnum.REGULAR,
+                5 * 1000,
+                10 * 1000,
+                3);
+        sTimer.setLimitedHold(true, 10*1000);
+
 
         //Initialize expected
         int expectedNumberOfIterations = 2;
 
         runTimer();
 
-        assertEquals(expectedNumberOfIterations, sTimer.mCurrentIterationValue);
+        assertEquals(expectedNumberOfIterations, sTimer.getCurrentIterationValue());
 
         Log.v(TAG, "limitedHold_isCorrect finished.");
 
