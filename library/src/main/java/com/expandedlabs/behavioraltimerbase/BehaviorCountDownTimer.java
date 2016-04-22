@@ -306,11 +306,25 @@ public abstract class BehaviorCountDownTimer
         return mCurrentIterationValue;
     }
 
+    /**
+     * Returns the length in milliseconds the next iteration is
+     * @return milliseconds length of the next iteration
+     */
+    public long getNextIntervalValue() { return mNextIntervalValue; }
+
+    /**
+     * Returns the type of fitting that was done to the timer
+     * NO_ADJUSTMENT, INTERVAL_ADJUSTMENT or ITERATION ADJUSTMENT
+     * @return The type of adjustment done to the timer
+     */
+    public IllFitEnum getTimerFitting() { return mTimerFitting; }
+
 //endregion
 
 //region CALLBACKS
     public abstract void onTick();
     public abstract void onFinish();
+    public abstract void onIntervalReached();
 //endregion
 
 //region PROTECTED
@@ -354,6 +368,10 @@ public abstract class BehaviorCountDownTimer
     {
         mTimerFitting = IllFitEnum.NO_ADJUSTMENT;
 
+        //Check to see if we are doing random intervals, if we are timer fitting is set to
+        //no adjustments
+        if(mDefinedRandomFlag) return;
+
         //Check to make sure we didn't get an invalid number e.g. less than 0 and/or iteration
         //is not less than 1 second. Maybe this check should be done prior to this timer...?
         if(mDefinedRandIterationValue <= 0 &&
@@ -363,12 +381,12 @@ public abstract class BehaviorCountDownTimer
             mTimerFitting = IllFitEnum.ITERATION_ADJUSTMENT;
         }
 
-        long modResult = mDefinedTimerValue % mDefinedIntervalValue + mDefinedLimitedHoldValue;
+        long modResult = mDefinedTimerValue % (mDefinedIntervalValue + mDefinedLimitedHoldValue);
         if(modResult != 0)
         {
             //The interval time does not fit perfectly in our timer,
             //this will adjust the main timer to fit an equal set of intervals
-            mDefinedTimerValue += mDefinedIntervalValue - modResult;
+            mDefinedTimerValue += mDefinedIntervalValue + mDefinedLimitedHoldValue - modResult;
 
             mTimerFitting = IllFitEnum.INTERVAL_ADJUSTMENT;
         }
@@ -452,6 +470,8 @@ public abstract class BehaviorCountDownTimer
                 ++mCurrentIterationValue;
                 Log.d(TAG, "Iteration count: " + mCurrentIterationValue);
             }
+
+            onIntervalReached();
         }
     }
 
@@ -465,7 +485,7 @@ public abstract class BehaviorCountDownTimer
 
         //Check if our interval is larger than our current timer, if it is just set the interval
         //to the current timer
-        if(interval <= mCurrentTimerValue)
+        if(interval >= mCurrentTimerValue)
         {
             interval = mCurrentTimerValue;
         }
