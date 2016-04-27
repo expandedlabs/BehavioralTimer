@@ -167,11 +167,11 @@ public abstract class BehaviorCountDownTimer
         checkTimerFitting();
 
         mNextIntervalValue = mDefinedIntervalValue;
+        mCurrentTimerValue = mDefinedTimerValue;
 
         calculateNewIntervalValue();
         mNextValueForAnInterval = mDefinedTimerValue - mNextIntervalValue;
 
-        mCurrentTimerValue = mDefinedTimerValue;
         mCurrentLimitedHold = false;
         mTimerRunning = false;
         mCurrentIterationValue = 0;
@@ -351,8 +351,8 @@ public abstract class BehaviorCountDownTimer
         Log.d(TAG, "finished.");
         mTimerRunning = false;
 
-        // Final increment iteration when we are not doing a limited hold
-            ++mCurrentIterationValue;
+        // Final increment iteration when we are doing a limited hold
+        ++mCurrentIterationValue;
 
         //Zero values since the timer has finished
         mCurrentTimerValue = 0;
@@ -497,7 +497,7 @@ public abstract class BehaviorCountDownTimer
     {
         int intervalsLeft = mDefinedRandIterationValue - mCurrentIterationValue - 1;
 
-        if(intervalsLeft == 0)
+        if(intervalsLeft == 1)
         {
             //Last interval, simply set it to what we have left in our main timer
             mNextIntervalValue = mCurrentTimerValue;
@@ -505,7 +505,7 @@ public abstract class BehaviorCountDownTimer
         }
 
         long maxIntervalValue = mCurrentTimerValue / intervalsLeft;
-        long minIntervalValue = (long)((mCurrentTimerValue / mDefinedRandIterationValue) * 0.5);
+        long minIntervalValue = (mCurrentTimerValue / mDefinedRandIterationValue) / 2;
 
         //Create random interval
         long interval = minIntervalValue

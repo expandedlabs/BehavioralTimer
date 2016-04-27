@@ -93,16 +93,18 @@ public class ApplicationTest
     private void runTimer() throws InterruptedException
     {
         //Create runnable since it has to sync up with the main thread
+        mTimer.reset();
         Runnable runnable = new Runnable()
         {
             @Override
             public void run()
             {
-                mTimer.reset();
                 mTimer.start();
             }
 
         };
+
+        Log.d(TAG, "Timer Start: " + mTimer.getDefinedTimerValue() + " Interval: " + mTimer.getCurrentIntervalValue());
 
         //Start timer and wait for the timer value + 1 second
         getInstrumentation().waitForIdle(runnable);
@@ -237,6 +239,79 @@ public class ApplicationTest
         };
 
         runTimer();
+
+    }
+
+    @Test
+    public void randomDeviation_isCorrect() throws InterruptedException
+    {
+        long timerValue = 20 * 1000;
+        final long intervalValue = 5 * 1000;
+        boolean randomFlag = true;
+        RandomStyleEnum style = RandomStyleEnum.DEVIATION;
+        final long minRandom = 2 * 1000;
+        final long maxRandom = 4 * 1000;
+        int numberOfIterations = 3;
+        boolean limitedHoldFlag = false;
+        long limitedHold = 5 * 1000;
+
+        //Create timer
+        mTimer = new BehaviorCountDownTimer(timerValue, intervalValue,
+                randomFlag, style, minRandom, maxRandom, numberOfIterations,
+                limitedHoldFlag, limitedHold)
+        {
+            @Override
+            public void onTick()
+            {
+                Log.d(TAG, "Interval: " + getCurrentTimerValue());
+            }
+
+            @Override
+            public void onFinish()
+            {
+                Log.d(TAG, "finished.");
+
+            }
+
+            @Override
+            public void onIntervalReached()
+            {
+                assertThat(maxRandom + intervalValue, is(greaterThanOrEqualTo(getNextIntervalValue())));
+                if(minRandom + intervalValue <= mTimer.getCurrentTimerValue())
+                    assertThat(minRandom, is(lessThanOrEqualTo(getNextIntervalValue())));
+                Log.d(TAG, "New Interval:" + getNextIntervalValue() + " Timer Value: " + getCurrentTimerValue());
+
+            }
+        };
+
+        runTimer();
+
+    }
+
+    @Test
+    public void randomIteration_isCorrect() throws InterruptedException
+    {
+        //Initialize expected
+        long expectedTimerValue = 0;
+        long expectedIntervalValue = 0;
+        int expectedNumberOfIterations = 5;
+
+        //Initialize parameters
+        createDefaultTimer();
+
+        mTimer.setTimerValue(20 * 1000);
+        mTimer.setTimerRandom(true,
+                RandomStyleEnum.ITERATION,
+                1 * 1000,
+                1 * 1000,
+                5);
+
+        runTimer();
+
+        //Verify end values are correct
+        assertEquals(expectedTimerValue, mTimer.getCurrentTimerValue());
+        assertEquals(expectedIntervalValue, mTimer.getCurrentIntervalValue());
+        assertEquals(expectedNumberOfIterations, mTimer.getCurrentIterationValue());
 
     }
 
