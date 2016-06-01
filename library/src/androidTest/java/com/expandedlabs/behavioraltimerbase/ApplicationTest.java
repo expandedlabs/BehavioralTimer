@@ -20,6 +20,7 @@ import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 /**
  * <a href="http://d.android.com/tools/testing/testing_android.html">Testing Fundamentals</a>
@@ -66,28 +67,34 @@ public class ApplicationTest
         long limitedHold = 5 * 1000;
 
         //Create timer
-        mTimer = new BehaviorCountDownTimer(timerValue, intervalValue,
-                randomFlag, style, minRandom, maxRandom, numberOfIterations,
-                limitedHoldFlag, limitedHold)
+        try
         {
-            @Override
-            public void onTick()
+            mTimer = new BehaviorCountDownTimer(timerValue, intervalValue,
+                    randomFlag, style, minRandom, maxRandom, numberOfIterations,
+                    limitedHoldFlag, limitedHold)
             {
-                Log.d(TAG, "Interval: " + getCurrentTimerValue());
-            }
+                @Override
+                public void onTick()
+                {
+                    Log.d(TAG, "Interval: " + getCurrentTimerValue());
+                }
 
-            @Override
-            public void onFinish()
-            {
-                Log.d(TAG, "Timer finished.");
-            }
+                @Override
+                public void onFinish()
+                {
+                    Log.d(TAG, "Timer finished.");
+                }
 
-            @Override
-            public void onIntervalReached()
-            {
-                Log.d(TAG, "New Interval: " + getCurrentIntervalValue());
-            }
-        };
+                @Override
+                public void onIntervalReached()
+                {
+                    Log.d(TAG, "New Interval: " + getCurrentIntervalValue());
+                }
+            };
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     private void runTimer() throws InterruptedException
@@ -122,14 +129,21 @@ public class ApplicationTest
     {
         //Initialize parameters
         createDefaultTimer();
-        mTimer.setTimerValue(5 * 1000);
-        mTimer.setIntervalValue(1 * 1000);
-        mTimer.setTimerRandom(false,
-                RandomStyleEnum.REGULAR,
-                5 * 1000,
-                10 * 1000,
-                3);
-        mTimer.setLimitedHold(false, 10*1000);
+        try
+        {
+            mTimer.setTimerValue(5 * 1000);
+            mTimer.setIntervalValue(1 * 1000);
+            mTimer.setTimerRandom(false,
+                    RandomStyleEnum.REGULAR,
+                    5 * 1000,
+                    10 * 1000,
+                    3);
+            mTimer.setLimitedHold(false, 10*1000);
+
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
 
         //Initialize expected
         long expectedTimerValue = 0;
@@ -149,14 +163,21 @@ public class ApplicationTest
     {
         //Initialize parameters
         createDefaultTimer();
-        mTimer.setTimerValue(30 * 1000);
-        mTimer.setIntervalValue(5 * 1000);
-        mTimer.setTimerRandom(false,
-                RandomStyleEnum.REGULAR,
-                5 * 1000,
-                10 * 1000,
-                3);
-        mTimer.setLimitedHold(true, 10*1000);
+        try
+        {
+            mTimer.setTimerValue(30 * 1000);
+            mTimer.setIntervalValue(5 * 1000);
+            mTimer.setTimerRandom(false,
+                    RandomStyleEnum.REGULAR,
+                    5 * 1000,
+                    10 * 1000,
+                    3);
+            mTimer.setLimitedHold(true, 10*1000);
+
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
 
 
         //Initialize expected
@@ -172,14 +193,28 @@ public class ApplicationTest
     {
         //Initialize parameters
         createDefaultTimer();
-        mTimer.setTimerValue(7 * 1000);
-        mTimer.setIntervalValue(3 * 1000);
-        mTimer.setTimerRandom(false,
-                RandomStyleEnum.REGULAR,
-                5 * 1000,
-                10 * 1000,
-                3);
-        mTimer.setLimitedHold(true, 2*1000);
+        try
+        {
+            mTimer.setTimerValue(7 * 1000);
+            mTimer.setIntervalValue(3 * 1000);
+            mTimer.setTimerRandom(false,
+                    RandomStyleEnum.REGULAR,
+                    5 * 1000,
+                    10 * 1000,
+                    3);
+
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        try
+        {
+            mTimer.setLimitedHold(true, 2*1000);
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
 
         mTimer.reset();
 
@@ -210,33 +245,93 @@ public class ApplicationTest
         long limitedHold = 5 * 1000;
 
         //Create timer
-        mTimer = new BehaviorCountDownTimer(timerValue, intervalValue,
-                randomFlag, style, minRandom, maxRandom, numberOfIterations,
-                limitedHoldFlag, limitedHold)
+        try
         {
-            @Override
-            public void onTick()
+            mTimer = new BehaviorCountDownTimer(timerValue, intervalValue,
+                    randomFlag, style, minRandom, maxRandom, numberOfIterations,
+                    limitedHoldFlag, limitedHold)
             {
-                Log.d(TAG, "Interval: " + getCurrentTimerValue());
-            }
+                @Override
+                public void onTick()
+                {
+                    Log.d(TAG, "Interval: " + getCurrentTimerValue());
+                }
 
-            @Override
-            public void onFinish()
+                @Override
+                public void onFinish()
+                {
+                    Log.d(TAG, "finished.");
+
+                }
+
+                @Override
+                public void onIntervalReached()
+                {
+                  assertThat(maxRandom, is(greaterThanOrEqualTo(getNextIntervalValue())));
+                    if(minRandom <= mTimer.getCurrentTimerValue())
+                        assertThat(minRandom, is(lessThanOrEqualTo(getNextIntervalValue())));
+                    Log.d(TAG, "New Interval:" + getNextIntervalValue() + " Timer Value: " + getCurrentTimerValue());
+
+                }
+            };
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        runTimer();
+
+    }
+
+    @Test
+    public void randomRegLimited_isCorrect() throws InterruptedException
+    {
+        long timerValue = 10 * 1000;
+        long intervalValue = 1 * 1000;
+        boolean randomFlag = true;
+        RandomStyleEnum style = RandomStyleEnum.REGULAR;
+        final long minRandom = 2 * 1000;
+        final long maxRandom = 5 * 1000;
+        int numberOfIterations = 3;
+        boolean limitedHoldFlag = true;
+        long limitedHold = 5 * 1000;
+
+        //Create timer
+        try
+        {
+            mTimer = new BehaviorCountDownTimer(timerValue, intervalValue,
+                    randomFlag, style, minRandom, maxRandom, numberOfIterations,
+                    limitedHoldFlag, limitedHold)
             {
-                Log.d(TAG, "finished.");
+                @Override
+                public void onTick()
+                {
+                    Log.d(TAG, "Interval: " + getCurrentTimerValue());
+                }
 
-            }
+                @Override
+                public void onFinish()
+                {
+                    Log.d(TAG, "finished.");
 
-            @Override
-            public void onIntervalReached()
-            {
-              assertThat(maxRandom, is(greaterThanOrEqualTo(getNextIntervalValue())));
-                if(minRandom <= mTimer.getCurrentTimerValue())
-                    assertThat(minRandom, is(lessThanOrEqualTo(getNextIntervalValue())));
-                Log.d(TAG, "New Interval:" + getNextIntervalValue() + " Timer Value: " + getCurrentTimerValue());
+                }
 
-            }
-        };
+                @Override
+                public void onIntervalReached()
+                {
+                    if(!!mTimer.getCurrentLimitedHoldFlag())
+                    {
+                        assertThat(maxRandom, is(greaterThanOrEqualTo(getNextIntervalValue())));
+                        if(minRandom <= mTimer.getCurrentTimerValue())
+                            assertThat(minRandom, is(lessThanOrEqualTo(getNextIntervalValue())));
+                    }
+                    Log.d(TAG, "New Interval:" + getNextIntervalValue() + " Timer Value: " + getCurrentTimerValue());
+                }
+            };
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
 
         runTimer();
 
@@ -256,33 +351,94 @@ public class ApplicationTest
         long limitedHold = 5 * 1000;
 
         //Create timer
-        mTimer = new BehaviorCountDownTimer(timerValue, intervalValue,
-                randomFlag, style, minRandom, maxRandom, numberOfIterations,
-                limitedHoldFlag, limitedHold)
+        try
         {
-            @Override
-            public void onTick()
+            mTimer = new BehaviorCountDownTimer(timerValue, intervalValue,
+                    randomFlag, style, minRandom, maxRandom, numberOfIterations,
+                    limitedHoldFlag, limitedHold)
             {
-                Log.d(TAG, "Interval: " + getCurrentTimerValue());
-            }
+                @Override
+                public void onTick()
+                {
+                    Log.d(TAG, "Interval: " + getCurrentTimerValue());
+                }
 
-            @Override
-            public void onFinish()
+                @Override
+                public void onFinish()
+                {
+                    Log.d(TAG, "finished.");
+
+                }
+
+                @Override
+                public void onIntervalReached()
+                {
+                    assertThat(maxRandom + intervalValue, is(greaterThanOrEqualTo(getNextIntervalValue())));
+                    if(minRandom + intervalValue <= mTimer.getCurrentTimerValue())
+                        assertThat(minRandom, is(lessThanOrEqualTo(getNextIntervalValue())));
+                    Log.d(TAG, "New Interval:" + getNextIntervalValue() + " Timer Value: " + getCurrentTimerValue());
+
+                }
+            };
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        runTimer();
+
+    }
+
+    @Test
+    public void randomDevLimited_isCorrect() throws InterruptedException
+    {
+        long timerValue = 20 * 1000;
+        final long intervalValue = 5 * 1000;
+        boolean randomFlag = true;
+        RandomStyleEnum style = RandomStyleEnum.DEVIATION;
+        final long minRandom = 2 * 1000;
+        final long maxRandom = 4 * 1000;
+        int numberOfIterations = 3;
+        boolean limitedHoldFlag = true;
+        long limitedHold = 5 * 1000;
+
+        //Create timer
+        try
+        {
+            mTimer = new BehaviorCountDownTimer(timerValue, intervalValue,
+                    randomFlag, style, minRandom, maxRandom, numberOfIterations,
+                    limitedHoldFlag, limitedHold)
             {
-                Log.d(TAG, "finished.");
+                @Override
+                public void onTick()
+                {
+                    Log.d(TAG, "Interval: " + getCurrentTimerValue());
+                }
 
-            }
+                @Override
+                public void onFinish()
+                {
+                    Log.d(TAG, "finished.");
 
-            @Override
-            public void onIntervalReached()
-            {
-                assertThat(maxRandom + intervalValue, is(greaterThanOrEqualTo(getNextIntervalValue())));
-                if(minRandom + intervalValue <= mTimer.getCurrentTimerValue())
-                    assertThat(minRandom, is(lessThanOrEqualTo(getNextIntervalValue())));
-                Log.d(TAG, "New Interval:" + getNextIntervalValue() + " Timer Value: " + getCurrentTimerValue());
+                }
 
-            }
-        };
+                @Override
+                public void onIntervalReached()
+                {
+                    if(!mTimer.getCurrentLimitedHoldFlag())
+                    {
+                        assertThat(maxRandom + intervalValue, is(greaterThanOrEqualTo(getNextIntervalValue())));
+                        if(minRandom + intervalValue <= mTimer.getCurrentTimerValue())
+                            assertThat(minRandom, is(lessThanOrEqualTo(getNextIntervalValue())));
+                        Log.d(TAG, "New Interval:" + getNextIntervalValue() + " Timer Value: " + getCurrentTimerValue());
+                    }
+
+                }
+            };
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
 
         runTimer();
 
@@ -299,12 +455,19 @@ public class ApplicationTest
         //Initialize parameters
         createDefaultTimer();
 
-        mTimer.setTimerValue(20 * 1000);
-        mTimer.setTimerRandom(true,
-                RandomStyleEnum.ITERATION,
-                1 * 1000,
-                1 * 1000,
-                5);
+        try
+        {
+            mTimer.setTimerValue(20 * 1000);
+            mTimer.setTimerRandom(true,
+                    RandomStyleEnum.ITERATION,
+                    1 * 1000,
+                    1 * 1000,
+                    5);
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
 
         runTimer();
 
@@ -312,6 +475,120 @@ public class ApplicationTest
         assertEquals(expectedTimerValue, mTimer.getCurrentTimerValue());
         assertEquals(expectedIntervalValue, mTimer.getCurrentIntervalValue());
         assertEquals(expectedNumberOfIterations, mTimer.getCurrentIterationValue());
+
+    }
+
+    @Test
+    public void randomIterLimited_isCorrect() throws InterruptedException
+    {
+        //Initialize expected
+        long expectedTimerValue = 0;
+        long expectedIntervalValue = 0;
+        int expectedNumberOfIterations = 5;
+
+        //Initialize parameters
+        createDefaultTimer();
+
+        try
+        {
+            mTimer.setTimerValue(20 * 1000);
+            mTimer.setTimerRandom(true,
+                    RandomStyleEnum.ITERATION,
+                    1 * 1000,
+                    1 * 1000,
+                    5);
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        try
+        {
+            mTimer.setLimitedHold(true, 2 * 1000);
+        } catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        runTimer();
+
+        //Verify end values are correct
+        assertEquals(expectedTimerValue, mTimer.getCurrentTimerValue());
+        assertEquals(expectedIntervalValue, mTimer.getCurrentIntervalValue());
+        assertEquals(expectedNumberOfIterations, mTimer.getCurrentIterationValue());
+
+    }
+
+    @Test
+    public void oddCases() throws InterruptedException
+    {
+        //Initialize expected
+        createDefaultTimer();
+
+        try
+        {
+            mTimer.setTimerValue(0);
+            fail("No exception was thrown. Exception for 0 timer was expected.");
+        } catch (Exception e)
+        {
+            Log.d(TAG, "Exception was thrown as expected.");
+        }
+
+        try
+        {
+            mTimer.setTimerValue(-5000);
+            fail("No exception was thrown. Exception for negative timer value was expected.");
+
+        } catch (Exception e)
+        {
+            Log.d(TAG, "Exception was thrown as expected.");
+        }
+
+        try
+        {
+            mTimer.setLimitedHold(true, -5000);
+            fail("No exception was thrown. Exception for negative limited hold value was expected.");
+        } catch (Exception e)
+        {
+            Log.d(TAG, "Exception was thrown as expected.");
+        }
+
+        try
+        {
+            mTimer.setIntervalValue(-1000);
+            fail("No exception was thrown. Exception for interval value was expected.");
+
+        }
+        catch (Exception e)
+        {
+            Log.d(TAG, "Exception was thrown as expected.");
+
+        }
+
+        try
+        {
+            mTimer.setTimerRandom(true, RandomStyleEnum.REGULAR, -1000, -3000, 5);
+            fail("No exception was thrown. Exception for interval value was expected.");
+
+        }
+        catch (Exception e)
+        {
+            Log.d(TAG, "Exception was thrown as expected.");
+
+        }
+
+        try
+        {
+            mTimer.setTimerRandom(true, RandomStyleEnum.ITERATION, 1000, 3000, -5);
+            fail("No exception was thrown. Exception for interval value was expected.");
+
+        }
+        catch (Exception e)
+        {
+            Log.d(TAG, "Exception was thrown as expected.");
+
+        }
+
 
     }
 

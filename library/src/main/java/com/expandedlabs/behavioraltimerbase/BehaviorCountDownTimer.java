@@ -117,10 +117,10 @@ public abstract class BehaviorCountDownTimer
                                   RandomStyleEnum style,
                                   long minRandom, long maxRandom,
                                   int numberOfIterations,
-                                  boolean limitedHoldFlag, long limitedHold)
+                                  boolean limitedHoldFlag, long limitedHold) throws Exception
     {
-        mDefinedTimerValue = timerValue;
-        mDefinedIntervalValue = intervalValue;
+        setTimerValue(timerValue);
+        setIntervalValue(intervalValue);
         mNextIntervalValue = intervalValue;
 
         setTimerRandom(randomFlag, style, minRandom, maxRandom, numberOfIterations);
@@ -188,11 +188,15 @@ public abstract class BehaviorCountDownTimer
      * @param holdFlag - Toggle timer capability to do a limited hold
      * @param holdValue - Value in milliseconds to do a limited hold after a regular interval
      */
-    public void setLimitedHold(boolean holdFlag, long holdValue)
+    public void setLimitedHold(boolean holdFlag, long holdValue) throws Exception
     {
         mDefinedLimitedHold = holdFlag;
         if(holdFlag)
         {
+            if(holdValue <= 0)
+            {
+                throw new Exception("Limited hold value is set to an invalid number.");
+            }
             mDefinedLimitedHoldValue = holdValue;
         }
         else
@@ -216,13 +220,38 @@ public abstract class BehaviorCountDownTimer
     public void setTimerRandom(boolean randomFlag,
                                RandomStyleEnum style,
                                long minRandom, long maxRandom,
-                               int numberOfIterations)
+                               int numberOfIterations) throws Exception
     {
+
         mDefinedRandomFlag = randomFlag;
         mDefinedStyle = style;
 
-        mDefinedMinRandomValue = minRandom;
-        mDefinedMaxRandomValue = maxRandom;
+        if(mDefinedRandomFlag && (maxRandom <= 0 ||minRandom <= 0)
+                && (style == RandomStyleEnum.REGULAR || style == RandomStyleEnum.DEVIATION))
+        {
+            throw new Exception("Min/Max random values are invalid.");
+        }
+
+        if(mDefinedRandomFlag && numberOfIterations <= 1 && style == RandomStyleEnum.ITERATION)
+        {
+            throw new Exception("Iteration value is invalid.");
+
+        }
+
+        if(minRandom > maxRandom)
+        {
+            //For some reason the incoming values are flipped where the max number wanted
+            //is actually smaller than the minimum specified
+            mDefinedMinRandomValue = maxRandom;
+            mDefinedMaxRandomValue = minRandom;
+        }
+        else
+        {
+            mDefinedMinRandomValue = minRandom;
+            mDefinedMaxRandomValue = maxRandom;
+        }
+
+
 
         mDefinedRandIterationValue = numberOfIterations;
 
@@ -233,8 +262,12 @@ public abstract class BehaviorCountDownTimer
      * Set the main timer's duration
      * @param timerValue Milliseconds for the main timer's duration
      */
-    public void setTimerValue(long timerValue)
+    public void setTimerValue(long timerValue) throws Exception
     {
+        if(timerValue <= 0)
+        {
+            throw new Exception("Invalid timer value specified.");
+        }
         mDefinedTimerValue = timerValue;
         invalidate();
     }
@@ -243,8 +276,12 @@ public abstract class BehaviorCountDownTimer
      * Set the timer's interval duration
      * @param intervalValue Milliseconds for timer intervals
      */
-    public void setIntervalValue(long intervalValue)
+    public void setIntervalValue(long intervalValue) throws Exception
     {
+        if(intervalValue <= 0)
+        {
+            throw new Exception("Interval value specified is invalid.");
+        }
         mDefinedIntervalValue = intervalValue;
         invalidate();
     }
@@ -318,6 +355,12 @@ public abstract class BehaviorCountDownTimer
      * @return The type of adjustment done to the timer
      */
     public IllFitEnum getTimerFitting() { return mTimerFitting; }
+
+    /**
+     * Returns if the current interval we are running is a limited hold
+     * @return True if the current interval session is a limited hold
+     */
+    public boolean getCurrentLimitedHoldFlag() { return mCurrentLimitedHold; }
 
 //endregion
 
