@@ -357,10 +357,16 @@ public abstract class BehaviorCountDownTimer
     public IllFitEnum getTimerFitting() { return mTimerFitting; }
 
     /**
-     * Returns if the current interval we are running is a limited hold
+     * Returns true if the current interval we are running is a limited hold
      * @return True if the current interval session is a limited hold
      */
     public boolean getCurrentLimitedHoldFlag() { return mCurrentLimitedHold; }
+
+    /**
+     * Returns true if the timer has random intervals
+     * @return True if the timer is doing random intervals
+     */
+    public boolean getRandomFlag() { return mDefinedRandomFlag; }
 
 //endregion
 
