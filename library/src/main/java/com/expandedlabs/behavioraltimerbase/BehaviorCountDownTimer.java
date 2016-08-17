@@ -128,6 +128,7 @@ public abstract class BehaviorCountDownTimer
         setLimitedHold(limitedHoldFlag, limitedHold);
 
         invalidate();
+        reset();
     }
 //endregion
 
@@ -508,7 +509,11 @@ public abstract class BehaviorCountDownTimer
             //We have iterated, calculate an interval value
             calculateNewIntervalValue();
 
-            mNextValueForAnInterval = mCurrentTimerValue - mNextIntervalValue;
+            //The additional 1000 is to mitigate the fact the interval will NEVER exactly tick
+            // at the TICK_RATE. We go back to the last second of that interval and realign
+            // the milliseconds so our interval time and our timer time align
+            mNextValueForAnInterval = mCurrentTimerValue +
+                    (1000 - (mCurrentTimerValue % 1000)) - mNextIntervalValue;
 
             Log.d(TAG, "Next Interval: " + mNextIntervalValue);
 
