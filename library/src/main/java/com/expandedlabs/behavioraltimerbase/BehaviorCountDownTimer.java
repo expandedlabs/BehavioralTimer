@@ -8,7 +8,7 @@ import java.util.Random;
 public abstract class BehaviorCountDownTimer
 {
 //region MEMBER VARIABLES
-    static final int TICK_INTERVAL = 100;
+    private static final int TICK_INTERVAL = 100;
     static final String TAG = "BehaviorCountDownTimer";
 
     /**
@@ -46,7 +46,7 @@ public abstract class BehaviorCountDownTimer
     /**
      * Flag that specifies a reset should be done
      */
-    boolean mReset = false;
+    private boolean mReset = false;
     /**
      * Specifies if the timer is running
      */
@@ -107,7 +107,7 @@ public abstract class BehaviorCountDownTimer
     /**
      * Random generator
      */
-    Random mRandomGen = new Random();
+    private final Random mRandomGen = new Random();
 //endregion
 
 //region CONSTRUCTOR
@@ -378,6 +378,7 @@ public abstract class BehaviorCountDownTimer
 //endregion
 
 //region PROTECTED
+    @SuppressWarnings("WeakerAccess")
     protected void innerTick(long millisUntilFinished)
     {
         mCurrentTimerValue = millisUntilFinished;
@@ -396,6 +397,7 @@ public abstract class BehaviorCountDownTimer
         }
     }
 
+    @SuppressWarnings("WeakerAccess")
     protected void innerFinish()
     {
         Log.d(TAG, "finished.");

@@ -11,15 +11,13 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
-import static com.expandedlabs.behavioraltimerbase.BehaviorCountDownTimer.RandomStyleEnum;
-
 import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static com.expandedlabs.behavioraltimerbase.BehaviorCountDownTimer.RandomStyleEnum;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
-import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 /**
@@ -29,12 +27,12 @@ import static org.junit.Assert.fail;
 @SmallTest
 public class ApplicationTest
 {
-    private static String TAG = "BCDT Test";
+    private static final String TAG = "BCDT Test";
 
     private BehaviorCountDownTimer mTimer;
 
     @Rule
-    public TestName mTestName = new TestName();
+    public final TestName mTestName = new TestName();
 
     @Before
     public void TestSetUp()
@@ -319,7 +317,7 @@ public class ApplicationTest
                 @Override
                 public void onIntervalReached()
                 {
-                    if(!!mTimer.getCurrentLimitedHoldFlag())
+                    if(!mTimer.getCurrentLimitedHoldFlag())
                     {
                         assertThat(maxRandom, is(greaterThanOrEqualTo(getNextIntervalValue())));
                         if(minRandom <= mTimer.getCurrentTimerValue())

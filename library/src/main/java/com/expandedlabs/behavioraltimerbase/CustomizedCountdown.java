@@ -9,10 +9,11 @@ import android.util.Log;
  * to stop it is by calling cancel() and when that's done, there's no way to update the
  * millis in future without having to call new.
  */
+@SuppressWarnings("WeakerAccess")
 public class CustomizedCountdown extends CountDownTimer
 {
-    private static String TAG = "BCDT.CustomizedCountdown";
-    private BehaviorCountDownTimer mBTimer;
+    private static final String TAG = "BCDT.CustomizedCountdown";
+    private final BehaviorCountDownTimer mBTimer;
 
     /**
      * @param millisInFuture    The number of millis in the future from the call
