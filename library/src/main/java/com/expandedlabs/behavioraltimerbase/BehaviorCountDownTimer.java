@@ -2,6 +2,12 @@ package com.expandedlabs.behavioraltimerbase;
 
 import android.util.Log;
 
+import com.expandedlabs.behavioraltimerbase.exceptions.IntervalTimerException;
+import com.expandedlabs.behavioraltimerbase.exceptions.IterationException;
+import com.expandedlabs.behavioraltimerbase.exceptions.LimitedHoldException;
+import com.expandedlabs.behavioraltimerbase.exceptions.MinMaxException;
+import com.expandedlabs.behavioraltimerbase.exceptions.TotalTimerException;
+
 import java.util.Random;
 
 
@@ -117,7 +123,12 @@ public abstract class BehaviorCountDownTimer
                                   RandomStyleEnum style,
                                   long minRandom, long maxRandom,
                                   int numberOfIterations,
-                                  boolean limitedHoldFlag, long limitedHold) throws Exception
+                                  boolean limitedHoldFlag, long limitedHold)
+            throws IntervalTimerException,
+            IterationException,
+            LimitedHoldException,
+            MinMaxException,
+            TotalTimerException
     {
         setTimerValue(timerValue);
         setIntervalValue(intervalValue);
@@ -189,14 +200,14 @@ public abstract class BehaviorCountDownTimer
      * @param holdFlag - Toggle timer capability to do a limited hold
      * @param holdValue - Value in milliseconds to do a limited hold after a regular interval
      */
-    public void setLimitedHold(boolean holdFlag, long holdValue) throws Exception
+    public void setLimitedHold(boolean holdFlag, long holdValue) throws LimitedHoldException
     {
         mDefinedLimitedHold = holdFlag;
         if(holdFlag)
         {
             if(holdValue <= 0)
             {
-                throw new Exception("Limited hold value is set to an invalid number.");
+                throw new LimitedHoldException("Limited hold value is set to an invalid number.");
             }
             mDefinedLimitedHoldValue = holdValue;
         }
@@ -221,7 +232,7 @@ public abstract class BehaviorCountDownTimer
     public void setTimerRandom(boolean randomFlag,
                                RandomStyleEnum style,
                                long minRandom, long maxRandom,
-                               int numberOfIterations) throws Exception
+                               int numberOfIterations) throws MinMaxException, IterationException
     {
 
         mDefinedRandomFlag = randomFlag;
@@ -230,12 +241,12 @@ public abstract class BehaviorCountDownTimer
         if(mDefinedRandomFlag && (maxRandom <= 0 ||minRandom <= 0)
                 && (style == RandomStyleEnum.REGULAR || style == RandomStyleEnum.DEVIATION))
         {
-            throw new Exception("Min/Max random values are invalid.");
+            throw new MinMaxException("Min/Max random values are invalid.");
         }
 
         if(mDefinedRandomFlag && numberOfIterations <= 1 && style == RandomStyleEnum.ITERATION)
         {
-            throw new Exception("Iteration value is invalid.");
+            throw new IterationException("Iteration value is invalid.");
 
         }
 
@@ -263,11 +274,11 @@ public abstract class BehaviorCountDownTimer
      * Set the main timer's duration
      * @param timerValue Milliseconds for the main timer's duration
      */
-    public void setTimerValue(long timerValue) throws Exception
+    public void setTimerValue(long timerValue) throws TotalTimerException
     {
         if(timerValue <= 0)
         {
-            throw new Exception("Invalid timer value specified.");
+            throw new TotalTimerException("Invalid timer value specified.");
         }
         mDefinedTimerValue = timerValue;
         invalidate();
@@ -277,11 +288,11 @@ public abstract class BehaviorCountDownTimer
      * Set the timer's interval duration
      * @param intervalValue Milliseconds for timer intervals
      */
-    public void setIntervalValue(long intervalValue) throws Exception
+    public void setIntervalValue(long intervalValue) throws IntervalTimerException
     {
         if(intervalValue <= 0)
         {
-            throw new Exception("Interval value specified is invalid.");
+            throw new IntervalTimerException("Interval value specified is invalid.");
         }
         mDefinedIntervalValue = intervalValue;
         invalidate();
