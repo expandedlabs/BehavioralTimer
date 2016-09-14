@@ -149,7 +149,10 @@ public abstract class BehaviorCountDownTimer
      */
     public void pause()
     {
-        mCustomizedCountdown.cancel();
+        if(mCustomizedCountdown!= null)
+        {
+            mCustomizedCountdown.cancel();
+        }
         mTimerRunning = false;
     }
 
@@ -414,8 +417,9 @@ public abstract class BehaviorCountDownTimer
         Log.d(TAG, "finished.");
         mTimerRunning = false;
 
-        // Final increment iteration when we are doing a limited hold
-        ++mCurrentIterationValue;
+        // Final increment iteration when we aren't doing a limited hold
+        if(!mCurrentLimitedHold)
+            ++mCurrentIterationValue;
 
         //Zero values since the timer has finished
         mCurrentTimerValue = 0;
@@ -519,6 +523,13 @@ public abstract class BehaviorCountDownTimer
         {
             Log.d(TAG, "Interval completed.");
 
+            //Increment iteration when we are not doing a limited hold
+            if(!mCurrentLimitedHold)
+            {
+                ++mCurrentIterationValue;
+                Log.d(TAG, "Iteration count: " + mCurrentIterationValue);
+            }
+
             //We have iterated, calculate an interval value
             calculateNewIntervalValue();
 
@@ -529,14 +540,6 @@ public abstract class BehaviorCountDownTimer
                     (1000 - (mCurrentTimerValue % 1000)) - mNextIntervalValue;
 
             Log.d(TAG, "Next Interval: " + mNextIntervalValue);
-
-
-            //Increment iteration when we are not doing a limited hold
-            if(!mCurrentLimitedHold)
-            {
-                ++mCurrentIterationValue;
-                Log.d(TAG, "Iteration count: " + mCurrentIterationValue);
-            }
 
             onIntervalReached();
         }
@@ -562,7 +565,7 @@ public abstract class BehaviorCountDownTimer
 
     private void getIterationInterval()
     {
-        int intervalsLeft = mDefinedRandIterationValue - mCurrentIterationValue - 1;
+        int intervalsLeft = mDefinedRandIterationValue - mCurrentIterationValue;
 
         if(intervalsLeft == 1)
         {

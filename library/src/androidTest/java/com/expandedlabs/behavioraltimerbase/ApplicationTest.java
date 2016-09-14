@@ -200,15 +200,9 @@ public class ApplicationTest
                     5 * 1000,
                     10 * 1000,
                     3);
-
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-
-        try
-        {
             mTimer.setLimitedHold(true, 2*1000);
+
+
         } catch (Exception e)
         {
             e.printStackTrace();
@@ -226,7 +220,7 @@ public class ApplicationTest
 
         runTimer();
 
-        assertThat(expectedNumberOfIterations, is(mTimer.getCurrentIterationValue()));
+        assertThat(mTimer.getCurrentIterationValue(), is(expectedNumberOfIterations));
     }
 
     @Test
@@ -448,7 +442,7 @@ public class ApplicationTest
         //Initialize expected
         long expectedTimerValue = 0;
         long expectedIntervalValue = 0;
-        int expectedNumberOfIterations = 5;
+        int expectedNumberOfIterations = 2;
 
         //Initialize parameters
         createDefaultTimer();
@@ -460,7 +454,7 @@ public class ApplicationTest
                     RandomStyleEnum.ITERATION,
                     1 * 1000,
                     1 * 1000,
-                    5);
+                    2);
         } catch (Exception e)
         {
             e.printStackTrace();
