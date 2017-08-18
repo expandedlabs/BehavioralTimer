@@ -78,7 +78,7 @@ public abstract class BehaviorCountDownTimer
     /**
      * Hold how many iterations for the random intervals
      */
-    private int mDefinedRandIterationValue = 0;
+    private int mDefinedRandIterationValue = 1;
     /**
      * Flag that signifies we have a limited hold type interval
      */
