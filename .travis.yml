@@ -7,8 +7,9 @@ env:
 android:
   components:
     - build-tools-27.0.3
-    - android-27
-    - sys-img-${ANDROID_ABI}-${ANDROID_TARGET}
+    - ${ANDROID_EMU_TGT}
+    - ${ANDROID_TARGET}
+    - sys-img-${ANDROID_ABI}-${ANDROID_EMU_TGT}
 
 script:
   - gradle build connectedCheck
