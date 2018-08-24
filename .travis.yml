@@ -26,7 +26,7 @@ script:
   - QEMU_AUDIO_DRV=none emulator -avd test -no-window &
   - android-wait-for-emulator
   - adb shell input keyevent 82 &
-  - adb logcat > logcat.log &
+  - adb logcat BehaviorCountDownTimer:D BCDTTest:D *:S > logcat.log &
   - LOGCAT_PID=$!
   - ./gradlew build connectedCheck cAT
   - cat logcat.log
