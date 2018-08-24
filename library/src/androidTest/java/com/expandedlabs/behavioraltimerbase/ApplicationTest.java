@@ -27,7 +27,7 @@ import static org.junit.Assert.fail;
 @SmallTest
 public class ApplicationTest
 {
-    private static final String TAG = "BCDT Test";
+    private static final String TAG = "BCDTTest";
 
     private BehaviorCountDownTimer mTimer;
 
