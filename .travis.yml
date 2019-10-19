@@ -1,0 +1,33 @@
+sudo: false
+language: android
+env:
+  global:
+    - ANDROID_TARGET=android-27
+    - ANDROID_EMU_TGT=android-24
+    - ANDROID_ABI=armeabi-v7a
+android:
+  components:
+    - build-tools-27.0.3
+    - extra-android-support
+    - extra-android-m2repository
+    - extra-google-m2repository
+    # Necessary because there is no emulator for android-27 available?
+    - ${ANDROID_EMU_TGT}
+    - ${ANDROID_TARGET}
+    - sys-img-${ANDROID_ABI}-${ANDROID_EMU_TGT}
+  licenses:
+    - '.+'
+    
+before_install:
+  - chmod +x gradlew
+
+script:
+  - echo no | android create avd --force -n test -t $ANDROID_EMU_TGT --abi $ANDROID_ABI
+  - QEMU_AUDIO_DRV=none emulator -avd test -no-window &
+  - android-wait-for-emulator
+  - adb shell input keyevent 82 &
+  - adb logcat BehaviorCountDownTimer:D BCDTTest:D *:S > logcat.log &
+  - LOGCAT_PID=$!
+  - ./gradlew build connectedCheck cAT
+  - cat logcat.log
+  - kill $LOGCAT_PID

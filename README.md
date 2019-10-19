@@ -1,4 +1,5 @@
-# BehavioralTimer
+# BehavioralTimer 
+[![Build Status](https://travis-ci.org/expandedlabs/BehavioralTimer.svg?branch=master)](https://travis-ci.org/expandedlabs/BehavioralTimer) 
 
 Timer based off of Android CountDownTimer but tailored to behavioral analysis.
 This is an android library (module).
