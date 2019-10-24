@@ -1,7 +1,8 @@
 package com.expandedlabs.behavioraltimerbase;
 
-import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+import androidx.test.filters.SmallTest;
 import android.util.Log;
 
 import org.junit.After;
@@ -11,7 +12,6 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
 import static com.expandedlabs.behavioraltimerbase.BehaviorCountDownTimer.RandomStyleEnum;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
@@ -112,7 +112,7 @@ public class ApplicationTest
         Log.d(TAG, "Timer Start: " + mTimer.getDefinedTimerValue() + " Interval: " + mTimer.getCurrentIntervalValue());
 
         //Start timer and wait for the timer value + 1 second
-        getInstrumentation().waitForIdle(runnable);
+        InstrumentationRegistry.getInstrumentation().waitForIdle(runnable);
         Thread.sleep(mTimer.getDefinedTimerValue() + 1000);
     }
 
