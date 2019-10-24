@@ -567,7 +567,7 @@ public abstract class BehaviorCountDownTimer
     {
         int intervalsLeft = mDefinedRandIterationValue - mCurrentIterationValue;
 
-        if(intervalsLeft == 1)
+        if(intervalsLeft <= 1)
         {
             //Last interval, simply set it to what we have left in our main timer
             mNextIntervalValue = mCurrentTimerValue;
