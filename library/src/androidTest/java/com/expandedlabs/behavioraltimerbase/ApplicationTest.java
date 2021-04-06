@@ -1,7 +1,7 @@
 package com.expandedlabs.behavioraltimerbase;
 
-import android.support.test.runner.AndroidJUnit4;
-import android.test.suitebuilder.annotation.SmallTest;
+import androidx.test.filters.SmallTest;
+import androidx.test.runner.AndroidJUnit4;
 import android.util.Log;
 
 import org.junit.After;
@@ -11,7 +11,7 @@ import org.junit.Test;
 import org.junit.rules.TestName;
 import org.junit.runner.RunWith;
 
-import static android.support.test.InstrumentationRegistry.getInstrumentation;
+import static  androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
 import static com.expandedlabs.behavioraltimerbase.BehaviorCountDownTimer.RandomStyleEnum;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.Matchers.greaterThanOrEqualTo;
